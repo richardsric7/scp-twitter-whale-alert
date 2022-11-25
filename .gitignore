@@ -1,4 +1,4 @@
 *.sqlite
 .DS_Store
-.env
-trovo-wallet-api
+*.env
+
