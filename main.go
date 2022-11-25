@@ -368,9 +368,9 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	if swap {
 		d, _ := decimal.RequireFromString(swapFromAmount).Float64()
 		sourceWithCommaThousandSep := p.Sprintf("%f", d)
-		msg = fmt.Sprintf("🚨🚨🚨 %v swapped %v #$%v to %v #$%v on wallet %v. Explorer: %v", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨 %v swapped %v $%v to %v $%v on wallet %v. Explorer: %v", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
 	} else {
-		msg = fmt.Sprintf("🚨🚨🚨  %v #$%v transferred from %v wallet to %v. Explorer: %v", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨  %v $%v transferred from %v wallet to %v. Explorer: %v", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
 
 	}
 	TwitterStatusUpdate(msg)
