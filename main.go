@@ -349,15 +349,15 @@ func GetLastCursor(db *gorm.DB) (lastCursor string) {
 	} else {
 		envCusor = "0"
 	}
-	var lc Lastcursor
+	// var lc Lastcursor
 
-	e := db.First(&lc).Error
-	if e == nil {
-		if decimal.RequireFromString(envCusor).GreaterThan(decimal.RequireFromString(lc.Cursor)) {
-			return envCusor
-		}
-		return lc.Cursor
-	}
+	// e := db.First(&lc).Error
+	// if e == nil {
+	// 	if decimal.RequireFromString(envCusor).GreaterThan(decimal.RequireFromString(lc.Cursor)) {
+	// 		return envCusor
+	// 	}
+	// 	return lc.Cursor
+	// }
 	return envCusor
 }
 func SaveLastCursor(lastCursor string, db *gorm.DB) {
