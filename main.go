@@ -213,7 +213,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	// minAmount := decimal.RequireFromString(os.Getenv("MIN_AMOUNT"))
 	// maxAmount := decimal.RequireFromString(os.Getenv("MAX_AMOUNT"))
 	// var maxPTSkip int
-	maxPTSkip := 990000000000000
+	maxPTSkip := 99000000000000
 	if o.GetType() == "payment" {
 		pmt := interface{}(o).(operations.Payment)
 		if tc > maxPTSkip {
@@ -415,7 +415,7 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 
 		// }
 	} else {
-		msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to #%s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
 
 		// if strings.Contains(toWallet, "...") {
 		// 	msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
