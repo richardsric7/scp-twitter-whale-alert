@@ -213,7 +213,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	// minAmount := decimal.RequireFromString(os.Getenv("MIN_AMOUNT"))
 	// maxAmount := decimal.RequireFromString(os.Getenv("MAX_AMOUNT"))
 	// var maxPTSkip int
-	maxPTSkip := 1000000000
+	maxPTSkip := 100000000000
 	if o.GetType() == "payment" {
 		pmt := interface{}(o).(operations.Payment)
 		if tc > maxPTSkip {
