@@ -212,10 +212,11 @@ func MonitorStream(db *gorm.DB) {
 func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	// minAmount := decimal.RequireFromString(os.Getenv("MIN_AMOUNT"))
 	// maxAmount := decimal.RequireFromString(os.Getenv("MAX_AMOUNT"))
-
+	var maxPTSkip int64
+	maxPTSkip = 3000
 	if o.GetType() == "payment" {
 		pmt := interface{}(o).(operations.Payment)
-		if tc > 2000 {
+		if tc > maxPTSkip {
 			log.Println("CURSOR....", pmt.PT)
 			tc = 0
 		}
@@ -236,7 +237,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	}
 	if o.GetType() == "create_account" {
 		pmt := interface{}(o).(operations.CreateAccount)
-		if tc > 2000 {
+		if tc > maxPTSkip {
 			log.Println("CURSOR....", pmt.PT)
 			tc = 0
 		}
@@ -272,7 +273,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			if tc > 2000 {
+			if tc > maxPTSkip {
 				log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
 
 				tc = 0
@@ -282,7 +283,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			if tc > 2000 {
+			if tc > maxPTSkip {
 				log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 
 				tc = 0
@@ -315,7 +316,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			if tc > 2000 {
+			if tc > maxPTSkip {
 				log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
 
 				tc = 0
@@ -326,7 +327,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 			}
 		} else if okdest && doAlt {
 
-			if tc > 2000 {
+			if tc > maxPTSkip {
 				log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 
 				tc = 0
