@@ -213,7 +213,8 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 
 	if o.GetType() == "payment" {
 		pmt := interface{}(o).(operations.Payment)
-		//send out to be saved to db
+
+		log.Println("CURSOR....", pmt.PT)
 
 		as, ok := trackedAssets[pmt.Code+":"+pmt.Issuer]
 		if !ok {
@@ -231,7 +232,8 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	}
 	if o.GetType() == "create_account" {
 		pmt := interface{}(o).(operations.CreateAccount)
-		//send out to be saved to db
+
+		log.Println("CURSOR....", pmt.PT)
 		destAssetCode := "XBN"
 		as, ok := trackedAssets[":"]
 		if !ok {
@@ -263,13 +265,13 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			log.Println("SWAP....", pmt.SourceAmount)
+			log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			log.Println("SWAP....", pmt.Amount)
+			log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
@@ -298,13 +300,13 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode)
+			log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			log.Println("SWAP....", pmt.Amount, pmt.Code)
+			log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
