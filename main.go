@@ -298,13 +298,13 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			log.Println("SWAP....", pmt.SourceAmount)
+			log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode)
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			log.Println("SWAP....", pmt.Amount)
+			log.Println("SWAP....", pmt.Amount, pmt.Code)
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
@@ -316,12 +316,22 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 }
 
 func GetLastCursor(db *gorm.DB) (lastCursor string) {
+	var envCusor string
+	if len(os.Getenv("LAST_CURSOR")) > 0 {
+		envCusor = os.Getenv("LAST_CURSOR")
+	} else {
+		envCusor = "0"
+	}
 	var lc Lastcursor
+
 	e := db.First(&lc).Error
 	if e == nil {
+		if decimal.RequireFromString(envCusor).GreaterThan(decimal.RequireFromString(lc.Cursor)) {
+			return envCusor
+		}
 		return lc.Cursor
 	}
-	return
+	return envCusor
 }
 func SaveLastCursor(lastCursor string, db *gorm.DB) {
 	var lc Lastcursor
@@ -350,13 +360,13 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	var msg string
 	explorer := os.Getenv("EXPLORER_URL") + tx
 	if v, ok := knownWallets[fromWallet]; ok {
-		fromWallet = v
+		fromWallet = "#" + v
 	} else {
 		bfrom := []byte(fromWallet)
 		fromWallet = fmt.Sprintf("%s...%s", bfrom[0:3], bfrom[52:])
 	}
 	if v, ok := knownWallets[toWallet]; ok {
-		toWallet = v
+		toWallet = "#" + v
 	} else {
 		bto := []byte(toWallet)
 		toWallet = fmt.Sprintf("%s...%s", bto[0:3], bto[52:])
@@ -368,9 +378,9 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	if swap {
 		d, _ := decimal.RequireFromString(swapFromAmount).Float64()
 		sourceWithCommaThousandSep := p.Sprintf("%f", d)
-		msg = fmt.Sprintf("🚨🚨🚨 %v swapped %v $%v to %v $%v on wallet #%v. @bantublockchain : %v", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet %s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
 	} else {
-		msg = fmt.Sprintf("🚨🚨🚨  %v $%v transferred from %v wallet to #%v. @bantublockchain : %v", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
 
 	}
 	TwitterStatusUpdate(msg)
