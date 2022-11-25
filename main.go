@@ -387,13 +387,13 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	var msg string
 	explorer := os.Getenv("EXPLORER_URL") + tx
 	if v, ok := knownWallets[fromWallet]; ok {
-		fromWallet = v
+		fromWallet = "#" + v
 	} else {
 		bfrom := []byte(fromWallet)
 		fromWallet = fmt.Sprintf("%s...%s", bfrom[0:3], bfrom[52:])
 	}
 	if v, ok := knownWallets[toWallet]; ok {
-		toWallet = v
+		toWallet = "#" + v
 	} else {
 		bto := []byte(toWallet)
 		toWallet = fmt.Sprintf("%s...%s", bto[0:3], bto[52:])
@@ -405,21 +405,25 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	if swap {
 		d, _ := decimal.RequireFromString(swapFromAmount).Float64()
 		sourceWithCommaThousandSep := p.Sprintf("%f", d)
-		if strings.Contains(toWallet, "...") {
-			msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet %s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet %s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
 
-		} else {
-			msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet #%s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+		// if strings.Contains(toWallet, "...") {
+		// 	msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet %s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
 
-		}
+		// } else {
+		// 	msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet #%s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+
+		// }
 	} else {
-		if strings.Contains(toWallet, "...") {
-			msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to #%s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
 
-		} else {
-			msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to #%s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		// if strings.Contains(toWallet, "...") {
+		// 	msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
 
-		}
+		// } else {
+		// 	msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to #%s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+
+		// }
 
 	}
 	TwitterStatusUpdate(msg)
