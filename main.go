@@ -384,11 +384,11 @@ func TwitterStatusUpdate(status string) {
 		&twitter.StatusUpdateParams{Status: status},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	if rp.Status != "200 OK" {
-		log.Fatalln(rp.Status)
+		log.Println(rp.Status)
 	}
 
 	fmt.Printf("status update Show:\n%+v, %v\n", update.ID, err)
