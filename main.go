@@ -11,10 +11,12 @@ import (
 
 	"bantu-monitor/db"
 	"bantu-monitor/network"
+	root "bantu-monitor/root/controllers"
 
 	"github.com/coreos/pkg/flagutil"
 	"github.com/dghubble/oauth1"
 	"github.com/drswork/go-twitter/twitter"
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/shopspring/decimal"
 	"github.com/stellar/go/clients/horizonclient"
@@ -83,11 +85,31 @@ func main() {
 	// Twitter client
 	client = twitter.NewClient(httpClient)
 
-	for {
-		MonitorStream(database)
+	go func() {
+		for {
+			MonitorStream(database)
 
-		time.Sleep(5 * time.Second)
-		log.Println("restarting stream..........")
+			time.Sleep(5 * time.Second)
+			log.Println("restarting stream..........")
+		}
+
+	}()
+	if os.Getenv("GIN_MODE") == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	var router *gin.Engine = gin.Default()
+
+	root.Init(router)
+	log.Println("##root services initialized##")
+
+	//run app
+	log.Println("##service started##")
+	// router.Run(":" + os.Getenv("PORT"))
+
+	if len(os.Getenv("PORT")) == 0 {
+		log.Println(router.Run(":80"))
+	} else {
+		log.Println(router.Run(":" + os.Getenv("PORT")))
 	}
 
 }
