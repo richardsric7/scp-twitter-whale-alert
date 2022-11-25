@@ -131,7 +131,7 @@ func main() {
 	}
 	var router *gin.Engine = gin.Default()
 
-	root.Init(router)
+	root.Init(router, trackedAssets)
 	log.Println("##root services initialized##")
 
 	//run app
