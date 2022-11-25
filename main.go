@@ -39,6 +39,7 @@ type Asset struct {
 var knownWallets map[string]string
 var trackedAssets map[string]Asset
 var client *twitter.Client
+var tc int64
 
 func init() {
 	errEnv := godotenv.Load()
@@ -171,6 +172,7 @@ func MonitorStream(db *gorm.DB) {
 		for {
 			o := <-workerChan
 			ProcessOperation(o, db)
+			tc++
 			SaveLastCursor(o.PagingToken(), db)
 		}
 
@@ -213,8 +215,10 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 
 	if o.GetType() == "payment" {
 		pmt := interface{}(o).(operations.Payment)
-
-		log.Println("CURSOR....", pmt.PT)
+		if tc > 2000 {
+			log.Println("CURSOR....", pmt.PT)
+			tc = 0
+		}
 
 		as, ok := trackedAssets[pmt.Code+":"+pmt.Issuer]
 		if !ok {
@@ -232,7 +236,10 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	}
 	if o.GetType() == "create_account" {
 		pmt := interface{}(o).(operations.CreateAccount)
-
+		if tc > 2000 {
+			log.Println("CURSOR....", pmt.PT)
+			tc = 0
+		}
 		log.Println("CURSOR....", pmt.PT)
 		destAssetCode := "XBN"
 		as, ok := trackedAssets[":"]
@@ -265,13 +272,21 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
+			if tc > 2000 {
+				log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
+
+				tc = 0
+			}
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
+			if tc > 2000 {
+				log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
+
+				tc = 0
+			}
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
@@ -300,13 +315,22 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
+			if tc > 2000 {
+				log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
+
+				tc = 0
+			}
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
+
+			if tc > 2000 {
+				log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
+
+				tc = 0
+			}
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
@@ -362,13 +386,13 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	var msg string
 	explorer := os.Getenv("EXPLORER_URL") + tx
 	if v, ok := knownWallets[fromWallet]; ok {
-		fromWallet = "#" + v
+		fromWallet = v
 	} else {
 		bfrom := []byte(fromWallet)
 		fromWallet = fmt.Sprintf("%s...%s", bfrom[0:3], bfrom[52:])
 	}
 	if v, ok := knownWallets[toWallet]; ok {
-		toWallet = "#" + v
+		toWallet = v
 	} else {
 		bto := []byte(toWallet)
 		toWallet = fmt.Sprintf("%s...%s", bto[0:3], bto[52:])
@@ -380,9 +404,21 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	if swap {
 		d, _ := decimal.RequireFromString(swapFromAmount).Float64()
 		sourceWithCommaThousandSep := p.Sprintf("%f", d)
-		msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet %s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+		if strings.Contains(toWallet, "...") {
+			msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet %s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+
+		} else {
+			msg = fmt.Sprintf("🚨🚨🚨 %s swapped %s $%s to %s $%s on wallet #%s. @bantublockchain : %s", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+
+		}
 	} else {
-		msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		if strings.Contains(toWallet, "...") {
+			msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to %s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+
+		} else {
+			msg = fmt.Sprintf("🚨🚨🚨  %s $%s transferred from %s wallet to #%s. @bantublockchain : %s", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+
+		}
 
 	}
 	TwitterStatusUpdate(msg)
