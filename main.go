@@ -350,13 +350,13 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	var msg string
 	explorer := os.Getenv("EXPLORER_URL") + tx
 	if v, ok := knownWallets[fromWallet]; ok {
-		fromWallet = v
+		fromWallet = "#" + v
 	} else {
 		bfrom := []byte(fromWallet)
 		fromWallet = fmt.Sprintf("%s...%s", bfrom[0:3], bfrom[52:])
 	}
 	if v, ok := knownWallets[toWallet]; ok {
-		toWallet = v
+		toWallet = "#" + v
 	} else {
 		bto := []byte(toWallet)
 		toWallet = fmt.Sprintf("%s...%s", bto[0:3], bto[52:])
@@ -368,9 +368,9 @@ func SendTwitterMessage(destAmount, fromWallet, toWallet, swapFromAsset, swapToA
 	if swap {
 		d, _ := decimal.RequireFromString(swapFromAmount).Float64()
 		sourceWithCommaThousandSep := p.Sprintf("%f", d)
-		msg = fmt.Sprintf("🚨🚨🚨 %v swapped %v #%v to %v #%v on wallet %v. Explorer: %v", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨 %v swapped %v #$%v to %v #$%v on wallet %v. Explorer: %v", fromWallet, sourceWithCommaThousandSep, swapFromAsset, DestAmountWithCommaThousandSep, swapToAsset, toWallet, explorer)
 	} else {
-		msg = fmt.Sprintf("🚨🚨🚨  %v #%v transferred from %v wallet to %v. Explorer: %v", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
+		msg = fmt.Sprintf("🚨🚨🚨  %v #$%v transferred from %v wallet to %v. Explorer: %v", DestAmountWithCommaThousandSep, swapToAsset, fromWallet, toWallet, explorer)
 
 	}
 	TwitterStatusUpdate(msg)
