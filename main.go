@@ -39,7 +39,8 @@ type Asset struct {
 var knownWallets map[string]string
 var trackedAssets map[string]Asset
 var client *twitter.Client
-var tc int
+
+// var tc int
 
 func init() {
 	errEnv := godotenv.Load()
@@ -172,7 +173,7 @@ func MonitorStream(db *gorm.DB) {
 		for {
 			o := <-workerChan
 			ProcessOperation(o, db)
-			tc++
+			// tc++
 			// SaveLastCursor(o.PagingToken(), db)
 		}
 
@@ -213,13 +214,13 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 	// minAmount := decimal.RequireFromString(os.Getenv("MIN_AMOUNT"))
 	// maxAmount := decimal.RequireFromString(os.Getenv("MAX_AMOUNT"))
 	// var maxPTSkip int
-	maxPTSkip := 900000000000
+	// maxPTSkip := 500
 	if o.GetType() == "payment" {
 		pmt := interface{}(o).(operations.Payment)
-		if tc > maxPTSkip {
-			log.Println("CURSOR....", pmt.PT)
-			tc = 0
-		}
+		// if tc > maxPTSkip {
+		// 	log.Println("CURSOR....", pmt.PT)
+		// 	tc = 0
+		// }
 
 		as, ok := trackedAssets[pmt.Code+":"+pmt.Issuer]
 		if !ok {
@@ -231,17 +232,17 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(as.MinAmount) {
 			SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, "", destAssetCode, "", pmt.TransactionHash, false)
-
+			log.Println("CURSOR....", pmt.PT)
 		}
 
 	}
 	if o.GetType() == "create_account" {
 		pmt := interface{}(o).(operations.CreateAccount)
-		if tc > maxPTSkip {
-			log.Println("CURSOR....", pmt.PT)
-			tc = 0
-		}
-		log.Println("CURSOR....", pmt.PT)
+		// if tc > maxPTSkip {
+		// 	log.Println("CURSOR....", pmt.PT)
+		// 	tc = 0
+		// }
+
 		destAssetCode := "XBN"
 		as, ok := trackedAssets[":"]
 		if !ok {
@@ -249,7 +250,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		if decimal.RequireFromString(pmt.StartingBalance).GreaterThanOrEqual(as.MinAmount) {
 			SendTwitterMessage(pmt.StartingBalance, pmt.Funder, pmt.Account, "", destAssetCode, "", pmt.TransactionHash, false)
-
+			log.Println("CURSOR....", pmt.PT)
 		}
 	}
 
@@ -273,26 +274,26 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			if tc > maxPTSkip {
-				log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
+			// if tc > maxPTSkip {
 
-				tc = 0
-			}
+			// 	tc = 0
+			// }
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
-			if tc > maxPTSkip {
-				log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
+			// if tc > maxPTSkip {
+			// 	log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 
-				tc = 0
-			}
+			// 	tc = 0
+			// }
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
 			}
 		}
+		log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
 
 	}
 
@@ -316,27 +317,28 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		}
 		doAlt := true
 		if oksource {
-			if tc > maxPTSkip {
-				log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
+			// if tc > maxPTSkip {
+			// 	log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
 
-				tc = 0
-			}
+			// 	tc = 0
+			// }
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
 			}
 		} else if okdest && doAlt {
 
-			if tc > maxPTSkip {
-				log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
+			// if tc > maxPTSkip {
+			// 	log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 
-				tc = 0
-			}
+			// 	tc = 0
+			// }
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 
 			}
 		}
+		log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
 
 	}
 
