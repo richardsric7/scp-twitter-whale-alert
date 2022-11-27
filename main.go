@@ -233,6 +233,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(as.MinAmount) {
 			SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, "", destAssetCode, "", pmt.TransactionHash, false)
 			log.Println("CURSOR....", pmt.PT)
+			SaveLastCursor(pmt.PT, db)
 		}
 
 	}
@@ -251,6 +252,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 		if decimal.RequireFromString(pmt.StartingBalance).GreaterThanOrEqual(as.MinAmount) {
 			SendTwitterMessage(pmt.StartingBalance, pmt.Funder, pmt.Account, "", destAssetCode, "", pmt.TransactionHash, false)
 			log.Println("CURSOR....", pmt.PT)
+			SaveLastCursor(pmt.PT, db)
 		}
 	}
 
@@ -281,6 +283,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
+				SaveLastCursor(pmt.PT, db)
 			}
 		} else if okdest && doAlt {
 			// if tc > maxPTSkip {
@@ -290,7 +293,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 			// }
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
-
+				SaveLastCursor(pmt.PT, db)
 			}
 		}
 		log.Println("SWAP....", pmt.SourceAmount, pmt.SourceAssetCode, "Cursor:", pmt.PT)
@@ -325,6 +328,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 			if decimal.RequireFromString(pmt.SourceAmount).GreaterThanOrEqual(assource.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
 				doAlt = false
+				SaveLastCursor(pmt.PT, db)
 			}
 		} else if okdest && doAlt {
 
@@ -335,7 +339,7 @@ func ProcessOperation(o operations.Operation, db *gorm.DB) {
 			// }
 			if decimal.RequireFromString(pmt.Amount).GreaterThanOrEqual(asdest.MinAmount) {
 				SendTwitterMessage(pmt.Amount, pmt.From, pmt.To, swapFrom, swapTo, pmt.SourceAmount, pmt.TransactionHash, true)
-
+				SaveLastCursor(pmt.PT, db)
 			}
 		}
 		log.Println("SWAP....", pmt.Amount, pmt.Code, "Cursor:", pmt.PT)
@@ -351,15 +355,19 @@ func GetLastCursor(db *gorm.DB) (lastCursor string) {
 	} else {
 		envCusor = "0"
 	}
-	// var lc Lastcursor
+	var lc Lastcursor
 
-	// e := db.First(&lc).Error
-	// if e == nil {
-	// 	if decimal.RequireFromString(envCusor).GreaterThan(decimal.RequireFromString(lc.Cursor)) {
-	// 		return envCusor
-	// 	}
-	// 	return lc.Cursor
-	// }
+	e := db.First(&lc).Error
+	if e == nil {
+		if decimal.RequireFromString(envCusor).GreaterThan(decimal.RequireFromString(lc.Cursor)) {
+			log.Println("[GetLastCursor] returning ENV cursor since it appears more recent.....")
+			return envCusor
+		}
+		log.Println("[GetLastCursor] returning DB cursor since it appears more recent.....")
+
+		return lc.Cursor
+	}
+	log.Println("[GetLastCursor] returning DB cursor since could not fetch from db.....")
 	return envCusor
 }
 func SaveLastCursor(lastCursor string, db *gorm.DB) {
@@ -369,7 +377,7 @@ func SaveLastCursor(lastCursor string, db *gorm.DB) {
 		lc.Cursor = lastCursor
 		e := db.Save(&lc).Error
 		if e != nil {
-			log.Fatalf("error saving last cursor %v\n", e)
+			log.Printf("error saving last cursor %v\n", e)
 
 		}
 		return
@@ -379,7 +387,7 @@ func SaveLastCursor(lastCursor string, db *gorm.DB) {
 	}
 	e = db.Create(&lc).Error
 	if e != nil {
-		log.Fatalf("error creating last cursor %v\n", e)
+		log.Printf("error creating last cursor %v\n", e)
 
 	}
 
