@@ -153,12 +153,19 @@ func MonitorStream(db *gorm.DB) {
 	workerChan := make(chan operations.Operation, 200000)
 	lastCursor := GetLastCursor(db)
 	var opsRequest horizonclient.OperationRequest
-	if len(lastCursor) > 0 {
+	if len(lastCursor) > 0 && lastCursor != "0" {
 		log.Printf("[MonitorStream] Starting monitoring from cursor[%v]\n", lastCursor)
 		opsRequest = horizonclient.OperationRequest{
 			Cursor: lastCursor,
 			Order:  horizonclient.OrderAsc,
 			Join:   "transactions",
+		}
+	} else if len(lastCursor) == 0 {
+		log.Println("[MonitorStream] Starting monitoring from most recent trx for blockchain")
+
+		opsRequest = horizonclient.OperationRequest{
+			Order: horizonclient.OrderAsc,
+			Join:  "transactions",
 		}
 	} else {
 		log.Println("[MonitorStream] Starting monitoring from genesis for blockchain")
